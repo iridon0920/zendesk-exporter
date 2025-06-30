@@ -171,6 +171,7 @@ export interface MarkdownTicket {
 export interface MarkdownComment {
   id: number;
   authorName: string;
+  authorRole?: 'requester' | 'agent' | 'collaborator';
   body: string;
   isPublic: boolean;
   createdAt: string;

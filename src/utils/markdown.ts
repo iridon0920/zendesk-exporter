@@ -79,10 +79,15 @@ export class MarkdownExporter {
       );
       
       for (const comment of sortedComments) {
-        lines.push(`### ${comment.authorName} - ${this.formatDate(comment.createdAt)}`);
+        const roleText = comment.authorRole === 'requester' ? '(リクエスタ)' : 
+                        comment.authorRole === 'agent' ? '(エージェント)' : 
+                        '(コラボレーター)';
+        lines.push(`### ${comment.authorName}${roleText} - ${this.formatDate(comment.createdAt)}`);
         lines.push('');
-        lines.push(`**公開:** ${comment.isPublic ? 'はい' : 'いいえ'}`);
-        lines.push('');
+        if (!comment.isPublic) {
+          lines.push('**[社内メモ]**');
+          lines.push('');
+        }
         lines.push(this.formatContent(comment.body));
         
         // 添付ファイル

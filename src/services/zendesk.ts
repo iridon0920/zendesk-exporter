@@ -124,9 +124,21 @@ export class ZendeskService {
     const markdownComments: MarkdownComment[] = [];
     for (const comment of comments) {
       const author = await this.getUser(comment.author_id);
+      
+      // 役割を判定
+      let authorRole: 'requester' | 'agent' | 'collaborator';
+      if (comment.author_id === ticket.requester_id) {
+        authorRole = 'requester';
+      } else if (author.role === 'admin' || author.role === 'agent') {
+        authorRole = 'agent';
+      } else {
+        authorRole = 'collaborator';
+      }
+      
       markdownComments.push({
         id: comment.id,
         authorName: author.name,
+        authorRole,
         body: comment.plain_body || comment.body,
         isPublic: comment.public,
         createdAt: comment.created_at,
@@ -154,10 +166,12 @@ export class ZendeskService {
   // 複数のチケットを一括でMarkdown形式に変換
   async convertTicketsToMarkdown(tickets: Ticket[]): Promise<MarkdownTicket[]> {
     const markdownTickets: MarkdownTicket[] = [];
+    const totalTickets = tickets.length;
     
-    for (const ticket of tickets) {
+    for (let i = 0; i < tickets.length; i++) {
+      const ticket = tickets[i];
       try {
-        console.log(`チケット ${ticket.id} を処理中...`);
+        process.stdout.write(`\rチケット処理中... (${i + 1}/${totalTickets}件処理完了)`);
         const markdownTicket = await this.convertTicketToMarkdown(ticket);
         markdownTickets.push(markdownTicket);
         
@@ -167,6 +181,11 @@ export class ZendeskService {
         console.error(`チケット ${ticket.id} の変換エラー:`, error);
         // エラーが発生しても他のチケットの処理は続行
       }
+    }
+
+    // 処理完了後に改行を追加
+    if (totalTickets > 0) {
+      console.log(''); // 改行
     }
 
     return markdownTickets;
